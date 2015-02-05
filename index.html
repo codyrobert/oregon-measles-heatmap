@@ -8,6 +8,8 @@
 		font-family: Helvetica, sans-serif;
 		height: 100%;
 		margin: 0;
+		min-height: 600px;
+		min-width: 800px;
 		overflow: hidden;
 		padding: 0;
 		width: 100%;
@@ -15,7 +17,7 @@
 	
 	#map-container {
 		bottom: 0;
-		left: 0;
+		left: 280px;
 		position: fixed;
 		right: 0;
 		top: 50px;
@@ -49,6 +51,69 @@
 		top: 0;
 		z-index: 20;
 	}
+	
+	#sidebar {
+		background: #eee;
+		bottom: 0;
+		box-sizing: border-box;
+		color: #333;
+		left: 0;
+		list-style: none;
+		overflow: auto;
+		padding: 20px 10px;
+		position: fixed;
+		top: 50px;
+		width: 280px;
+	}
+	
+	#sidebar h3 {
+		font-size: 18px;
+		margin: 0 0 20px;
+	}
+	
+	#rate-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	
+	#rate-list li {
+		margin: 0;
+		padding: 0;
+	}
+	
+	#rate-list li + li {
+		margin-top: 20px;
+	}
+	
+	#rate-list .name {
+		display: block;
+		font-size: 16px;
+		margin-bottom: 5px;
+		margin-left: 90px;
+	}
+	
+	#rate-list .county {
+		color: #999;
+		display: block;
+		font-size: 12px;
+		margin-left: 90px;
+	}
+	
+	#rate-list .rate {
+		background: #ff0054;
+		color: #fff;
+		display: block;
+		float: left;
+		font-size: 20px;
+		height: 30px;
+		line-height: 34px;
+		overflow: hidden;
+		padding: 0 10px;
+		text-align: center;
+		white-space: nowrap;
+		width: 60px;
+	}
 	</style>
 </head>
 
@@ -56,6 +121,12 @@
 
 	<div id="title-bar">Highest Rates of Non-Vaccination in Oregon (Personal Exemptions)</div>
 	<a id="source" href="https://docs.google.com/spreadsheets/d/1JA6MQca0jdkhXd7khVVPEehyrxo1gD_VToHerryG2IY/edit?usp=sharing" target="_blank">Source</a>
+	
+	<div id="sidebar">
+		<h3>Exemption Rates</h3>
+		<ul id="rate-list">
+		</ul>
+	</div>
 	
 	<div id="map-container">
 		<div id="map-canvas"></div>
@@ -103,13 +174,21 @@
 					var latlng = school["gsx$latitudelongitude"]["$t"].split(", ");
 					var totalCount = school["gsx$enrollmentcount"]["$t"];
 					var exemptCount = school["gsx$non-medicalexemptioncount"]["$t"];
-					var ratio = Math.round(exemptCount / totalCount, 4) * 100;
+					var ratio = Math.round(exemptCount / totalCount * 1000) / 10;
 					
 					addToHeatmap({
 						location: new google.maps.LatLng(latlng[0], latlng[1]),
 						weight: ratio
 					});
+					
+					addToSidebar({
+						name: name,
+						county: county,
+						rate: ratio
+					});
 				}
+				
+				sortSidebar();
 				
 			}, "json");
 		};
@@ -124,6 +203,33 @@
 			
 			heatmap.set("data", data);
 		};
+		
+		var addToSidebar = function(options)
+		{
+			var li = $("<li>");
+			li.data("sort", options.rate);
+			
+			li.append("<span class='rate'>"+options.rate+"%</span>");
+			li.append("<span class='name'>"+options.name+"</span>");
+			li.append("<span class='county'>"+options.county+" County</span>");
+			
+			$("#rate-list").append(li);
+		};
+		
+		var sortSidebar = function()
+		{
+			var rows = $("#rate-list > li");
+			
+			rows.sort(function (a, b) 
+			{
+				var contentA = parseFloat($(a).data("sort"));
+				var contentB = parseFloat($(b).data("sort"));
+				
+				return (contentA > contentB) ? -1 : (contentA < contentB) ? 1 : 0;
+			});
+			
+			rows.detach().appendTo($("#rate-list"));
+		}
 		
 		$(document).ready(initialize);
 		
