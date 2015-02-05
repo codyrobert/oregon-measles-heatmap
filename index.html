@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Heatmaps</title>
+	<style>
+	html, body, #map-canvas {
+	height: 100%;
+	margin: 0;
+	overflow: hidden;
+	padding: 0;
+	width: 100%;
+	}
+	</style>
+</head>
+
+<body>
+
+	<div id="map-canvas"></div>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true&libraries=visualization"></script>
+	<script>
+	(function($) {
+		var map, geocoder, heatmap;
+		
+		var initialize = function() 
+		{
+			var mapOptions = {
+				zoom: 8,
+				center: new google.maps.LatLng(44.004133, -120.554201),
+				mapTypeId: google.maps.MapTypeId.HYBRID
+			};
+		
+			geocoder = new google.maps.Geocoder();
+			map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+			
+			heatmap = new google.maps.visualization.HeatmapLayer({
+				radius: 50,
+				gradient: [
+					'rgba(255, 0, 84, 0)',
+					'rgba(255, 0, 84, 1)'
+				]
+			});
+			
+			heatmap.setMap(map);
+			
+			loadData();
+		};
+		
+		var loadData = function()
+		{
+			$.get("https://spreadsheets.google.com/feeds/list/1JA6MQca0jdkhXd7khVVPEehyrxo1gD_VToHerryG2IY/od6/public/values?alt=json", function(data) {
+				
+				for(var i in data.feed.entry)
+				{
+					var school = data.feed.entry[i];
+					var county = school["gsx$county"]["$t"];
+					var name = school["gsx$school"]["$t"];
+					var latlng = school["gsx$latitudelongitude"]["$t"].split(", ");
+					var totalCount = school["gsx$enrollmentcount"]["$t"];
+					var exemptCount = school["gsx$non-medicalexemptioncount"]["$t"];
+					var ratio = Math.round(exemptCount / totalCount, 4) * 100;
+					
+					addToHeatmap({
+						location: new google.maps.LatLng(latlng[0], latlng[1]),
+						weight: ratio
+					});
+				}
+				
+			}, "json");
+		};
+		
+		var addToHeatmap = function(options)
+		{
+			var data = heatmap.get("data");
+			data.push({
+				location: options.location,
+				weight: options.weight
+			});
+			
+			heatmap.set("data", data);
+		};
+		
+		$(document).ready(initialize);
+		
+		/*var getAddressGeocodes = function(data)
+		{
+			var timeout = 0;
+			var school = data.shift();
+			
+			if (school)
+			{
+				var county = school["gsx$county"]["$t"];
+				var name = school["gsx$school"]["$t"];
+				var latlng = school["gsx$latitudelongitude"]["$t"].split(", ");
+				
+				if (latlng.length < 2)
+				{
+					addAddressToHeatmap(name+", "+county+", Oregon, USA");
+					timeout = 200;
+				}
+				else
+				{
+					$("#map-canvas").append(latlng[0]+", "+latlng[1]+"<br />");
+				}
+			}
+			
+			if (data.length)
+			{
+				setTimeout(function() {
+					getAddressGeocodes(data);
+				}, timeout);
+			}
+		};
+		
+		var addAddressToHeatmap = function(address)
+		{
+			geocoder.geocode({address: address}, function(results, status) 
+			{
+				if (status == google.maps.GeocoderStatus.OK)
+				{
+					var data = heatmap.get("data");
+					data.push({
+						location: results[0].geometry.location,
+						weight: Math.round(Math.random() * 100)
+					});
+					
+					heatmap.set("data", data);
+					
+					var geo = results[0].geometry.location;
+					$("#map-canvas").append(geo.k+", "+geo.D+"<br />");
+				}
+				else
+				{
+					$("#map-canvas").append("<br />");
+				}
+			});
+		};*/
+	})(jQuery);
+	</script>
+
+</body>
+</html>
