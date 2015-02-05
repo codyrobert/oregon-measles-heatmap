@@ -4,13 +4,22 @@
 	<meta charset="utf-8">
 	<title>Measles in Oregon</title>
 	<style>
-	html, body, #map-canvas {
+	html, body {
 		font-family: Helvetica, sans-serif;
 		height: 100%;
 		margin: 0;
 		overflow: hidden;
 		padding: 0;
 		width: 100%;
+	}
+	
+	#map-canvas {
+		bottom: 0;
+		left: 0;
+		position: fixed;
+		right: 0;
+		top: 50px;
+		z-index: 10;
 	}
 	
 	#title-bar {
@@ -24,7 +33,7 @@
 		right: 0;
 		text-align: center;
 		top: 0;
-		z-index: 998;
+		z-index: 20;
 	}
 	
 	#source {
@@ -38,7 +47,7 @@
 		right: 0;
 		text-decoration: none;
 		top: 0;
-		z-index: 999;
+		z-index: 15;
 	}
 	</style>
 </head>
